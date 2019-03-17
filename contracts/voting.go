@@ -13,9 +13,9 @@ import (
 )
 
 type NodeInfo struct {
-	address types.Address `json:"address"     gencodec:"required"`
-	url     string        `json:"url"`
-	id      uint64        `json:"id"`
+	Address types.Address `json:"address"     gencodec:"required"`
+	Url     string        `json:"url"`
+	Id      uint64        `json:"id"`
 }
 
 type Voting interface {
@@ -108,8 +108,8 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 
 func decodeNodeResult(out []byte) NodeInfo {
 	return NodeInfo{
-		address: utils.BytesToAddress(out[32-types.AddressLength : 32]),
-		id:      utils.BigEndianToUin64(out[64:96]),
-		url:     string(out[127:143]),
+		Address: utils.BytesToAddress(out[32-types.AddressLength : 32]),
+		Id:      utils.BigEndianToUin64(out[64:96]),
+		Url:     string(out[127:143]),
 	}
 }
