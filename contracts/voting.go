@@ -12,12 +12,6 @@ import (
 	"sync"
 )
 
-type NodeInfo struct {
-	Address types.Address `json:"address"     gencodec:"required"`
-	Url     string        `json:"url"`
-	Id      uint64        `json:"id"`
-}
-
 type Voting interface {
 
 	// get node num
@@ -25,6 +19,12 @@ type Voting interface {
 
 	// get nodes list which sorted
 	GetNodeList(count uint64) ([]NodeInfo, error)
+}
+
+type NodeInfo struct {
+	Address types.Address `json:"address"     gencodec:"required"`
+	Url     string        `json:"url"`
+	Id      uint64        `json:"id"`
 }
 
 type VotingContract struct {
