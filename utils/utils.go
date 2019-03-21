@@ -94,3 +94,28 @@ func BigEndianToUin64(b []byte) uint64 {
 func Bytes2Hex(d []byte) string {
 	return hex.EncodeToString(d)
 }
+
+func GetAccountNonce(genesis *types.Block, account types.Address) uint64 {
+	var defaultNonce = uint64(0)
+	for _, tx := range genesis.Transactions {
+		if *tx.Data.From == account {
+			if tx.Data.AccountNonce > defaultNonce {
+				defaultNonce = tx.Data.AccountNonce
+			}
+		}
+	}
+	return defaultNonce
+}
+
+func GetDefaultAddressByContractType(contract types.ContractType) string {
+	if contract == types.MetaDataContractType {
+		return types.MetaDataContractAddress
+	} else if contract == types.WhiteListContractType {
+		return types.WhiteListContractTypeDefaultAddress
+	} else if contract == types.VoteContractType {
+		return types.VotingContractDefaultAddress
+	} else if contract == types.JustitiaRightContractType {
+		return types.JustiitaContractDefaultAddress
+	}
+	panic("invalid parameter")
+}

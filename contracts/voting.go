@@ -35,13 +35,10 @@ type VotingContract struct {
 }
 
 func NewVotingContract() Voting {
-	chain, err := blockchain.NewLatestStateBlockChain()
-	if err != nil {
-		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
-	}
-	result, err := chain.Get([]byte(types.JustitiaVoting))
+	metaData := NewMetaDataContract()
+	voteAddress := metaData.GetContractById(types.VoteContractType)
 	contract := &VotingContract{
-		contractAddress: utils.BytesToAddress(result),
+		contractAddress: voteAddress,
 	}
 	contract.handleRegister()
 	return contract
@@ -108,8 +105,8 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 
 func decodeNodeResult(out []byte) NodeInfo {
 	return NodeInfo{
-		Address: utils.BytesToAddress(out[32-types.AddressLength : 32]),
-		Id:      utils.BigEndianToUin64(out[64:96]),
+		Address: utils.BytesToAddress(out[12:32]),
+		Id:      utils.BigEndianToUin64(out[32:64]),
 		Url:     string(out[127:143]),
 	}
 }
