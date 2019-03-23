@@ -53,10 +53,9 @@ func (instance *MetaDataContract) GetContractById(contractType types.ContractTyp
 		uint64(0), big.NewInt(0), utils.Hex2Bytes(callCode), types.Address{})
 	result, _, _, err := utils.EvmCall(tx, typesa.LatestBlockNumber)
 	if nil != err {
-		log.Error("error")
+		log.Error("evm called to get contract by id error with %v.", err)
 		return utils.HexToAddress(types.JustiitaContractDefaultAddress)
 	}
-	log.Error("-----%v------", result)
 	address := utils.BytesToAddress(result[12:])
 	return address
 }
