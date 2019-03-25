@@ -25,18 +25,6 @@ func Hex2Bytes(str string) []byte {
 	return h
 }
 
-type RefAddress struct {
-	Addr types.Address
-}
-
-func NewRefAddress(addr types.Address) *RefAddress {
-	return &RefAddress{Addr: addr}
-}
-
-func (ref *RefAddress) Address() types.Address {
-	return ref.Addr
-}
-
 func CopyBytes(b []byte) (copiedBytes []byte) {
 	if b == nil {
 		return nil

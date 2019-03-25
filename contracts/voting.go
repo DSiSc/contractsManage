@@ -6,10 +6,14 @@ import (
 	"github.com/DSiSc/contractsManage/utils"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
-	"github.com/DSiSc/evm-NG"
-	"math"
 	"math/big"
 	"sync"
+)
+
+// byte code which match to function name
+const (
+	totalNodes            = "9592d424"
+	GetCandidataByRanking = "ae3364a4"
 )
 
 type Voting interface {
@@ -30,8 +34,8 @@ type NodeInfo struct {
 type VotingContract struct {
 	mutex           sync.RWMutex
 	contractAddress types.Address
-	handlerFunc     map[string][]byte
-	nodeNumber      uint64
+	// nodeNumber will update when called NodeNumber()
+	nodeNumber uint64
 }
 
 func NewVotingContract() Voting {
@@ -40,15 +44,7 @@ func NewVotingContract() Voting {
 	contract := &VotingContract{
 		contractAddress: voteAddress,
 	}
-	contract.handleRegister()
 	return contract
-}
-
-func (vote *VotingContract) handleRegister() {
-	vote.handlerFunc = make(map[string][]byte)
-	vote.handlerFunc["totalNodes"] = utils.Hex2Bytes("9592d424")
-	vote.handlerFunc["candidateState"] = utils.Hex2Bytes("8ff49c88000000000000000000000000")
-	vote.handlerFunc["GetCandidateByRanking"] = utils.Hex2Bytes("ae3364a4")
 }
 
 func (vote *VotingContract) NodeNumber() uint64 {
@@ -57,19 +53,18 @@ func (vote *VotingContract) NodeNumber() uint64 {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
 	block := chain.GetCurrentBlock()
-	tx := utils.NewTransactionForCall(vote.contractAddress, vote.handlerFunc["totalNodes"])
-	context := evm.NewEVMContext(tx, block.Header, chain, types.Address{})
-	evmEnv := evm.NewEVM(context, chain)
-	sender := utils.NewRefAddress(*tx.Data.From)
-	result, _, err := evmEnv.Call(sender, *tx.Data.Recipient, tx.Data.Payload, math.MaxUint64, big.NewInt(0))
+	callCode := utils.Hex2Bytes(totalNodes)
+	nonce := utils.GetAccountNonce(block, types.Address{})
+	result, err := utils.EvmCall(nonce, &vote.contractAddress, big.NewInt(0),
+		uint64(0), big.NewInt(0), callCode, nil)
 	if nil != err {
 		log.Error("error")
-		return uint64(4)
+		return types.MinimunNodesForDpos
 	}
 	nodeNum := utils.BigEndianToUin64(result)
 	vote.mutex.Lock()
+	defer vote.mutex.Unlock()
 	vote.nodeNumber = nodeNum
-	vote.mutex.Unlock()
 	return nodeNum
 }
 
@@ -86,19 +81,17 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
 	block := chain.GetCurrentBlock()
-	base := "ae3364a4000000000000000000000000000000000000000000000000000000000000000"
 	for index := 0; uint64(index) < count; index++ {
-		payload := fmt.Sprintf("%s%d", base, index)
-		tx := utils.NewTransactionForCall(vote.contractAddress, utils.Hex2Bytes(payload))
-		context := evm.NewEVMContext(tx, block.Header, chain, types.Address{})
-		evmEnv := evm.NewEVM(context, chain)
-		sender := utils.NewRefAddress(*tx.Data.From)
-		out, _, err := evmEnv.Call(sender, *tx.Data.Recipient, tx.Data.Payload, math.MaxUint64, big.NewInt(0))
+		callCode := fmt.Sprintf("%s%s", GetCandidataByRanking, utils.EncodeUint256(index))
+		nonce := utils.GetAccountNonce(block, types.Address{})
+		result, err := utils.EvmCall(nonce, &vote.contractAddress, big.NewInt(0),
+			uint64(0), big.NewInt(0), utils.Hex2Bytes(callCode), nil)
 		if nil != err {
-			panic("error")
+			log.Error("error")
+			return NodeList, fmt.Errorf("get node info failed with error %v", err)
 		}
-		nodeinfo := decodeNodeResult(out)
-		NodeList = append(NodeList, nodeinfo)
+		nodeInfo := decodeNodeResult(result)
+		NodeList = append(NodeList, nodeInfo)
 	}
 	return NodeList, nil
 }

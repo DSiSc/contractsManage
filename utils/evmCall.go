@@ -1,38 +1,41 @@
 package utils
 
 import (
-	"github.com/DSiSc/apigateway/core/types"
 	"github.com/DSiSc/blockchain"
 	typec "github.com/DSiSc/craft/types"
 	"github.com/DSiSc/evm-NG"
-	"github.com/DSiSc/validator/worker"
-	"github.com/DSiSc/validator/worker/common"
+	"math"
+	"math/big"
 )
 
-func EvmCall(tx *typec.Transaction, blockNr types.BlockNumber) ([]byte, uint64, bool, error) {
+type RefAddress struct {
+	Addr typec.Address
+}
+
+func NewRefAddress(addr typec.Address) *RefAddress {
+	return &RefAddress{Addr: addr}
+}
+
+func (self *RefAddress) Address() typec.Address {
+	return self.Addr
+}
+
+func EvmCall(nonce uint64, to *typec.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int,
+	data []byte, from *typec.Address) ([]byte, error) {
+
+	tx := newTransaction(nonce, to, amount, gasLimit, gasPrice, data, &typec.Address{})
 	bc, err := blockchain.NewLatestStateBlockChain()
 	if err != nil {
-		return nil, 0, true, err
+		return nil, err
 	}
-	var block *typec.Block
-	if blockNr == types.LatestBlockNumber {
-		block = bc.GetCurrentBlock()
-	} else {
-		height := blockNr.Touint64()
-		block, err = bc.GetBlockByHeight(height)
-		if err != nil {
-			return nil, 0, true, err
-		}
-	}
-
+	block := bc.GetCurrentBlock()
 	bchash, err := blockchain.NewBlockChainByBlockHash(block.HeaderHash)
 	if err != nil {
-		return nil, 0, true, err
+		return nil, err
 	}
-
 	context := evm.NewEVMContext(*tx, block.Header, bchash, block.Header.CoinBase)
 	evmEnv := evm.NewEVM(context, bchash)
-	gp := new(common.GasPool).AddGas(uint64(65536))
-	result, gas, failed, err, _ := worker.ApplyTransaction(evmEnv, tx, gp)
-	return result, gas, failed, err
+	sender := NewRefAddress(*tx.Data.From)
+	result, _, err := evmEnv.Call(sender, *tx.Data.Recipient, tx.Data.Payload, math.MaxUint64, tx.Data.Amount)
+	return result, err
 }
