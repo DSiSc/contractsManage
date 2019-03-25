@@ -100,6 +100,6 @@ func decodeNodeResult(out []byte) NodeInfo {
 	return NodeInfo{
 		Address: utils.BytesToAddress(out[12:32]),
 		Id:      utils.BigEndianToUin64(out[32:64]),
-		Url:     string(out[127:143]),
+		Url:     string(out[127:146]),
 	}
 }
