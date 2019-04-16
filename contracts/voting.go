@@ -8,12 +8,14 @@ import (
 	"github.com/DSiSc/craft/types"
 	"math/big"
 	"sync"
+	"regexp"
 )
 
 // byte code which match to function name
 const (
 	totalNodes            = "9592d424"
 	GetCandidataByRanking = "ae3364a4"
+	UrlReg = "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{2,5}"
 )
 
 type Voting interface {
@@ -97,9 +99,16 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 }
 
 func decodeNodeResult(out []byte) NodeInfo {
+	rawUrl := string(out[127:146])
 	return NodeInfo{
 		Address: utils.BytesToAddress(out[12:32]),
 		Id:      utils.BigEndianToUin64(out[32:64]),
-		Url:     string(out[127:146]),
+		Url:     regURL(rawUrl),
 	}
+}
+
+func regURL(rawUrl string) (url string){
+	reg := regexp.MustCompile(UrlReg)
+	data := reg.Find([]byte(rawUrl))
+	return string(data)
 }
