@@ -99,7 +99,7 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 }
 
 func decodeNodeResult(out []byte) NodeInfo {
-	rawUrl := string(out[127:146])
+	rawUrl := string(out[127:])
 	return NodeInfo{
 		Address: utils.BytesToAddress(out[12:32]),
 		Id:      utils.BigEndianToUin64(out[32:64]),
