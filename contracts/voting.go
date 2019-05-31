@@ -2,20 +2,20 @@ package contracts
 
 import (
 	"fmt"
-	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/contractsManage/utils"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
+	"github.com/DSiSc/repository"
 	"math/big"
-	"sync"
 	"regexp"
+	"sync"
 )
 
 // byte code which match to function name
 const (
 	totalNodes            = "9592d424"
 	GetCandidataByRanking = "ae3364a4"
-	UrlReg = "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{2,5}"
+	UrlReg                = "[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{2,5}"
 )
 
 type Voting interface {
@@ -50,7 +50,7 @@ func NewVotingContract() Voting {
 }
 
 func (vote *VotingContract) NodeNumber() uint64 {
-	chain, err := blockchain.NewLatestStateBlockChain()
+	chain, err := repository.NewLatestStateRepository()
 	if err != nil {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
@@ -78,7 +78,7 @@ func (vote *VotingContract) GetNodeList(count uint64) ([]NodeInfo, error) {
 		log.Error("invalid parameter count %d while node number is %d.", count, vote.nodeNumber)
 		return make([]NodeInfo, 0), fmt.Errorf("invalid parameter count %d while node number is %d", count, vote.nodeNumber)
 	}
-	chain, err := blockchain.NewLatestStateBlockChain()
+	chain, err := repository.NewLatestStateRepository()
 	if err != nil {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
@@ -110,7 +110,7 @@ func decodeNodeResult(out []byte) NodeInfo {
 	}
 }
 
-func regURL(rawUrl string) (url string){
+func regURL(rawUrl string) (url string) {
 	reg := regexp.MustCompile(UrlReg)
 	data := reg.Find([]byte(rawUrl))
 	return string(data)

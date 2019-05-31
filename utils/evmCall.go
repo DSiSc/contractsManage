@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"github.com/DSiSc/blockchain"
 	typec "github.com/DSiSc/craft/types"
 	"github.com/DSiSc/evm-NG"
+	"github.com/DSiSc/repository"
 	"math"
 	"math/big"
 )
@@ -24,12 +24,12 @@ func EvmCall(nonce uint64, to *typec.Address, amount *big.Int, gasLimit uint64, 
 	data []byte, from *typec.Address) ([]byte, error) {
 
 	tx := newTransaction(nonce, to, amount, gasLimit, gasPrice, data, &typec.Address{})
-	bc, err := blockchain.NewLatestStateBlockChain()
+	bc, err := repository.NewLatestStateRepository()
 	if err != nil {
 		return nil, err
 	}
 	block := bc.GetCurrentBlock()
-	bchash, err := blockchain.NewBlockChainByBlockHash(block.HeaderHash)
+	bchash, err := repository.NewRepositoryByBlockHash(block.HeaderHash)
 	if err != nil {
 		return nil, err
 	}

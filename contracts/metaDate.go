@@ -2,10 +2,10 @@ package contracts
 
 import (
 	"fmt"
-	"github.com/DSiSc/blockchain"
 	"github.com/DSiSc/contractsManage/utils"
 	"github.com/DSiSc/craft/log"
 	"github.com/DSiSc/craft/types"
+	"github.com/DSiSc/repository"
 	"math/big"
 )
 
@@ -40,7 +40,7 @@ func NewMetaDataContract() MetaData {
 }
 
 func (instance *MetaDataContract) GetContractById(contractType types.ContractType) types.Address {
-	chain, err := blockchain.NewLatestStateBlockChain()
+	chain, err := repository.NewLatestStateRepository()
 	if err != nil {
 		panic(fmt.Errorf("failed to create init-state block chain, as: %v", err))
 	}
